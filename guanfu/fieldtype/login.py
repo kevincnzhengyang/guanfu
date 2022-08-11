@@ -5,7 +5,7 @@
 * @Author      : kevin.z.y <kevin.cn.zhengyang@gmail.com>
 * @Date        : 2022-08-10 16:16:49
 * @LastEditors : kevin.z.y <kevin.cn.zhengyang@gmail.com>
-* @LastEditTime: 2022-08-10 22:32:35
+* @LastEditTime: 2022-08-11 10:11:18
 * @FilePath    : /guanfu/guanfu/fieldtype/login.py
 * @Description : login with username and password
 * @Copyright (c) 2022 by Zheng, Yang, All Rights Reserved.
@@ -110,28 +110,43 @@ class FieldLogin(justpy.Div):
                         text=kwargs.get(
                             "button_text",
                             "Login"))
-        # link group
-        lg = justpy.Div(a=bg,
-                        classes=kwargs.get(
-                            "link_class",
-                            "flex justify-evenly mt-5"))
-        justpy.A(a=lg,
-                 classes=kwargs.get(
-                            "link_class",
-                            "w-full text-center font-medium text-gray-500"),
-                 text=kwargs.get(
-                            "link1_text",
-                            "Recover password!"),
-                 href=kwargs.get(
-                            "link1_href",
-                            "#"))
-        justpy.A(a=lg,
-                 classes=kwargs.get(
-                            "link_class",
-                            "w-full text-center font-medium text-gray-500"),
-                 text=kwargs.get(
-                            "link2_text",
-                            "Singup!"),
-                 href=kwargs.get(
-                            "link2_href",
-                            "#"))
+
+        if kwargs.get("with_google", False):
+            # with Google Account
+            # TODO
+            pass
+        if kwargs.get("with_github", False):
+            # with Github Account
+            # TODO
+            pass
+        if kwargs.get("with_twitter", False):
+            # with Twitter Account
+            # TODO
+            pass
+
+        if kwargs.get("with_link", False):
+            # link group
+            lg = justpy.Div(a=bg,
+                            classes=kwargs.get(
+                                "link_class",
+                                "flex justify-evenly mt-5"))
+            justpy.A(a=lg,
+                    classes=kwargs.get(
+                                "link_class",
+                                "w-full text-center font-medium text-gray-500"),
+                    text=kwargs.get(
+                                "link1_text",
+                                "Recover password!"),
+                    href=kwargs.get(
+                                "link1_href",
+                                "#"))
+            justpy.A(a=lg,
+                    classes=kwargs.get(
+                                "link_class",
+                                "w-full text-center font-medium text-gray-500"),
+                    text=kwargs.get(
+                                "link2_text",
+                                "Singup!"),
+                    href=kwargs.get(
+                                "link2_href",
+                                "#"))
