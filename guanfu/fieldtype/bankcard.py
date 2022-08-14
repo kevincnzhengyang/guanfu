@@ -5,12 +5,13 @@
 * @Author      : kevin.z.y <kevin.cn.zhengyang@gmail.com>
 * @Date        : 2022-08-12 16:11:03
 * @LastEditors : kevin.z.y <kevin.cn.zhengyang@gmail.com>
-* @LastEditTime: 2022-08-13 13:21:31
+* @LastEditTime: 2022-08-13 16:00:45
 * @FilePath    : /guanfu/guanfu/fieldtype/bankcard.py
 * @Description :
 * @Copyright (c) 2022 by Zheng, Yang, All Rights Reserved.
 '''
 import justpy
+import logging
 from datetime import date, datetime
 from pydantic import BaseModel
 from pydantic.types import PaymentCardNumber, PaymentCardBrand, constr
@@ -352,7 +353,7 @@ class FieldBankCard(justpy.Form):
             self.card.number = msg.target.value
         except Exception as e:
             # TODO collect and response error to UI
-            print(f"!!!!{e}")
+            print(f"!!!!{type(e)}-{e}")
         self.snapshot.update_info(self.card)
 
     async def change_holder(self, msg):
