@@ -5,7 +5,7 @@
 * @Author      : kevin.z.y <kevin.cn.zhengyang@gmail.com>
 * @Date        : 2022-08-12 16:11:03
 * @LastEditors : kevin.z.y <kevin.cn.zhengyang@gmail.com>
-* @LastEditTime: 2022-08-13 16:00:45
+* @LastEditTime: 2022-08-15 22:30:52
 * @FilePath    : /guanfu/guanfu/fieldtype/bankcard.py
 * @Description :
 * @Copyright (c) 2022 by Zheng, Yang, All Rights Reserved.
@@ -16,12 +16,8 @@ from datetime import date, datetime
 from pydantic import BaseModel
 from pydantic.types import PaymentCardNumber, PaymentCardBrand, constr
 
+from guanfu.utils.funcs import args_default, ui_notify, ui_input_error
 
-# cardnumber
-# name
-# cvv
-# exp date
-# snapshot: brand, card mask, ...
 
 class ModelCardNumber(BaseModel):
     holder: constr(strip_whitespace=True, min_length=1)
@@ -33,11 +29,12 @@ class ModelCardNumber(BaseModel):
         validate_assignment = True
 
 
+# TODO snapshot can't display in QuasarPage
 class FieldBankCardSnapshot(justpy.Figure):
     _card_class = "w-max h-max relative select-none pointer-events-none"
     _verso_class = "z-1 absolute overflow-hidden transform translate-y-12 left-16 w-96 h-56 rounded-2xl bg-gray-100 shadow-2xl"
     _verso_bar_class = "w-full h-12 bg-gray-200 absolute top-10"
-    _recto_class = "z-2 absolute overflow-hidden w-96 h-56 rounded-2xl px-8 py-6 bg-red-400 text-white shadow-xl flex flex-col justify-end gap-6"
+    _rect_class = "z-2 absolute overflow-hidden w-96 h-56 rounded-2xl px-8 py-6 bg-red-400 text-white shadow-xl flex flex-col justify-end gap-6"
     _logo_class = "absolute top-6 right-8 w-16 h-8 flex justify-items-center items-center"
     _chip_class = "w-11 h-7 rounded bg-yellow-100"
     _number_class = "whitespace-nowrap text-2xl font-semibold"
@@ -47,130 +44,224 @@ class FieldBankCardSnapshot(justpy.Figure):
     _info_text_class = "whitespace-nowrap text-lg"
 
     def __init__(self, **kwargs):
+        """
+        widgets:
+        - card
+        - verso
+        - verso_bar
+        - rect
+        - logo
+        - chip
+        - number
+        - info_label
+        - info_text
+        """
+        # super().__init__(**kwargs)
+
+        # # figure
+        # self.classes = kwargs.get(
+        #     "figure_class",
+        #     "w-full") # "top-8 left-8")
+
+        # # card div
+        # cd = justpy.Div(a=self,
+        #                 classes=kwargs.get(
+        #                     "card_class",
+        #                     FieldBankCardSnapshot._card_class))
+
+        # # verso
+        # verso = justpy.Div(a=cd,
+        #                    classes=kwargs.get(
+        #                         "verso_class",
+        #                         FieldBankCardSnapshot._verso_class))
+        # justpy.Div(a=verso,
+        #            classes=kwargs.get(
+        #                 "verso_bar_class",
+        #                 FieldBankCardSnapshot._verso_bar_class),
+        #            text=kwargs.get(
+        #                 "verso_bar_text",
+        #                 "&nbsp;"))
+
+        # # recto
+        # rd = justpy.Div(a=cd,
+        #                 classes=kwargs.get(
+        #                     "recto_class",
+        #                     FieldBankCardSnapshot._rect_class))
+        # #logo
+        # ld = justpy.Div(a=rd,
+        #                 classes=kwargs.get(
+        #                     "logo_class",
+        #                     FieldBankCardSnapshot._logo_class))
+        # self.logo = justpy.Svg(a=ld, viewBox="0 0 1000 324.68")
+        # # visa logo
+        # self.show_brand(brand=kwargs.get("card_brand", PaymentCardBrand.visa))
+        # if kwargs.get("with_chip", True):
+        #     justpy.Div(a=rd,
+        #                classes=kwargs.get(
+        #                     "chip_class",
+        #                     FieldBankCardSnapshot._chip_class),
+        #                text="  ")
+        # # number
+        # self.number = justpy.Div(a=rd,
+        #                          classes=kwargs.get(
+        #                             "number_class",
+        #                             FieldBankCardSnapshot._number_class),
+        #                          style=kwargs.get(
+        #                             "number_style",
+        #                             "font-family:Courier new, mono;"),
+        #                          text=kwargs.get(
+        #                             "card_number",
+        #                             "424242******4242"))
+        # # info
+        # # - holder
+        # nd = justpy.Div(a=rd,
+        #                 classes=kwargs.get(
+        #                     "info_class",
+        #                     FieldBankCardSnapshot._info_class))
+        # hd = justpy.Div(a=nd,
+        #                 classes=kwargs.get(
+        #                     "info_group_class",
+        #                     FieldBankCardSnapshot._info_group_class))
+        # # -- label
+        # justpy.Span(a=hd,
+        #             classes=kwargs.get(
+        #                 "info_label_class",
+        #                 FieldBankCardSnapshot._info_lable_class),
+        #             text=kwargs.get(
+        #                 "holder_label",
+        #                 "Card holder"))
+        # # -- name
+        # self.holder = justpy.Span(a=hd,
+        #                         classes=kwargs.get(
+        #                             "info_text_class",
+        #                             FieldBankCardSnapshot._info_text_class),
+        #                         text=kwargs.get(
+        #                             "holder_text",
+        #                             "John Doe"))
+        # # - expires
+        # ed = justpy.Div(a=nd,
+        #                 classes=kwargs.get(
+        #                     "info_group_class",
+        #                     FieldBankCardSnapshot._info_group_class))
+        # # -- label
+        # justpy.Span(a=ed,
+        #             classes=kwargs.get(
+        #                 "info_label_class",
+        #                 FieldBankCardSnapshot._info_lable_class),
+        #             text=kwargs.get(
+        #                 "expires_label",
+        #                 "Expires"))
+        # # -- date
+        # self.expires = justpy.Span(a=ed,
+        #                            classes=kwargs.get(
+        #                                 "info_text_class",
+        #                                 FieldBankCardSnapshot._info_text_class),
+        #                            text=kwargs.get(
+        #                                 "expires_text",
+        #                                 "09/28"))
+        # # - cvc
+        # vd = justpy.Div(a=nd,
+        #                 classes=kwargs.get(
+        #                     "info_group_class",
+        #                     FieldBankCardSnapshot._info_group_class))
+        # # -- label
+        # justpy.Span(a=vd,
+        #             classes=kwargs.get(
+        #                 "info_label_class",
+        #                 FieldBankCardSnapshot._info_lable_class),
+        #             text=kwargs.get(
+        #                 "cvc_label",
+        #                 "cvc"))
+        # # -- cvc
+        # self.cvc = justpy.Span(a=vd,
+        #                        classes=kwargs.get(
+        #                             "info_text_class",
+        #                             FieldBankCardSnapshot._info_text_class),
+        #                        text=kwargs.get(
+        #                             "cvc_text",
+        #                             "123"))
+
+        # handle parameters
+        params = {w: kwargs.pop(f"_{w}", dict()) for w in [
+            "card", "verso", "verso_bar", "rect",
+            "logo", "chip", "number", "info_label", "info_text"]}
+
+        # using kwargs for figure
+        args_default(kwargs, {"classes": "w-full"})
         super().__init__(**kwargs)
 
-        # figure
-        self.classes = kwargs.get(
-            "figure_class",
-            "w-full") # "top-8 left-8")
-
         # card div
-        cd = justpy.Div(a=self,
-                        classes=kwargs.get(
-                            "card_class",
-                            FieldBankCardSnapshot._card_class))
+        args_default(params["card"], {"a": self,
+                            "classes": FieldBankCardSnapshot._card_class})
+        cd = justpy.Div(**params["card"])
 
         # verso
-        verso = justpy.Div(a=cd,
-                           classes=kwargs.get(
-                                "verso_class",
-                                FieldBankCardSnapshot._verso_class))
-        justpy.Div(a=verso,
-                   classes=kwargs.get(
-                        "verso_bar_class",
-                        FieldBankCardSnapshot._verso_bar_class),
-                   text=kwargs.get(
-                        "verso_bar_text",
-                        "&nbsp;"))
+        args_default(params["verso"], {"a": cd,
+                            "classes": FieldBankCardSnapshot._verso_class})
+        verso = justpy.Div(**params["verso"])
+        args_default(params["verso_bar"], {"a": verso,
+                            "classes": FieldBankCardSnapshot._verso_bar_class,
+                            "text": "&nbsp;"})
+        justpy.Div(**params["verso_bar"])
 
-        # recto
-        rd = justpy.Div(a=cd,
-                        classes=kwargs.get(
-                            "recto_class",
-                            FieldBankCardSnapshot._recto_class))
+        # rect
+        args_default(params["rect"], {"a": cd,
+                            "classes": FieldBankCardSnapshot._rect_class})
+        rd = justpy.Div(**params["rect"])
+
         #logo
-        ld = justpy.Div(a=rd,
-                        classes=kwargs.get(
-                            "logo_class",
-                            FieldBankCardSnapshot._logo_class))
+        args_default(params["logo"], {"a": rd,
+                            "classes": FieldBankCardSnapshot._logo_class})
+        ld = justpy.Div(**params["logo"])
+
         self.logo = justpy.Svg(a=ld, viewBox="0 0 1000 324.68")
         # visa logo
-        self.show_brand(brand=kwargs.get("card_brand", PaymentCardBrand.visa))
-        if kwargs.get("with_chip", True):
-            justpy.Div(a=rd,
-                       classes=kwargs.get(
-                            "chip_class",
-                            FieldBankCardSnapshot._chip_class),
-                       text="  ")
+        self.show_brand(brand=PaymentCardBrand.visa)
+        args_default(params["chip"], {"a": rd,
+                            "classes": FieldBankCardSnapshot._chip_class,
+                            "text": "&nbsp;"})
+        justpy.Div(**params["chip"])
+
         # number
-        self.number = justpy.Div(a=rd,
-                                 classes=kwargs.get(
-                                    "number_class",
-                                    FieldBankCardSnapshot._number_class),
-                                 style=kwargs.get(
-                                    "number_style",
-                                    "font-family:Courier new, mono;"),
-                                 text=kwargs.get(
-                                    "card_number",
-                                    "424242******4242"))
+        args_default(params["number"], {"a": rd,
+                            "classes": FieldBankCardSnapshot._number_class,
+                            "style": "font-family:Courier new, mono;",
+                            "text": "424242******4242"})
+        self.number = justpy.Div(**params["number"])
+
         # info
         # - holder
-        nd = justpy.Div(a=rd,
-                        classes=kwargs.get(
-                            "info_class",
-                            FieldBankCardSnapshot._info_class))
-        hd = justpy.Div(a=nd,
-                        classes=kwargs.get(
-                            "info_group_class",
-                            FieldBankCardSnapshot._info_group_class))
+        nd = justpy.Div(a=rd, classes=FieldBankCardSnapshot._info_class)
+        hd = justpy.Div(a=nd, classes=FieldBankCardSnapshot._info_group_class)
         # -- label
-        justpy.Span(a=hd,
-                    classes=kwargs.get(
-                        "info_label_class",
-                        FieldBankCardSnapshot._info_lable_class),
-                    text=kwargs.get(
-                        "holder_label",
-                        "Card holder"))
+        args_default(params["info_label"], {"a": hd,
+                            "classes": FieldBankCardSnapshot._info_lable_class,
+                            "text": "Card holder"})
+        justpy.Span(**params["info_label"])
         # -- name
-        self.holder = justpy.Span(a=hd,
-                                classes=kwargs.get(
-                                    "info_text_class",
-                                    FieldBankCardSnapshot._info_text_class),
-                                text=kwargs.get(
-                                    "holder_text",
-                                    "John Doe"))
+        args_default(params["info_text"], {"a": hd,
+                            "classes": FieldBankCardSnapshot._info_text_class,
+                            "text": "John Doe"})
+        self.holder = justpy.Span(**params["info_text"])
         # - expires
-        ed = justpy.Div(a=nd,
-                        classes=kwargs.get(
-                            "info_group_class",
-                            FieldBankCardSnapshot._info_group_class))
-        # -- label
-        justpy.Span(a=ed,
-                    classes=kwargs.get(
-                        "info_label_class",
-                        FieldBankCardSnapshot._info_lable_class),
-                    text=kwargs.get(
-                        "expires_label",
-                        "Expires"))
+        ed = justpy.Div(a=nd, classes=FieldBankCardSnapshot._info_group_class)
+        params["info_label"].update({"a": ed,
+                    "text": "Expires"})
+        justpy.Span(**params["info_label"])
         # -- date
-        self.expires = justpy.Span(a=ed,
-                                   classes=kwargs.get(
-                                        "info_text_class",
-                                        FieldBankCardSnapshot._info_text_class),
-                                   text=kwargs.get(
-                                        "expires_text",
-                                        "09/28"))
+        params["info_text"].update({"a": ed,
+                    "text": "J09/28"})
+        self.expires = justpy.Span(**params["info_text"])
         # - cvc
-        vd = justpy.Div(a=nd,
-                        classes=kwargs.get(
-                            "info_group_class",
-                            FieldBankCardSnapshot._info_group_class))
+        vd = justpy.Div(a=nd, classes=FieldBankCardSnapshot._info_group_class)
         # -- label
-        justpy.Span(a=vd,
-                    classes=kwargs.get(
-                        "info_label_class",
-                        FieldBankCardSnapshot._info_lable_class),
-                    text=kwargs.get(
-                        "cvc_label",
-                        "cvc"))
+        params["info_label"].update({"a": vd,
+                    "text": "cvc"})
+        justpy.Span(**params["info_label"])
         # -- cvc
-        self.cvc = justpy.Span(a=vd,
-                               classes=kwargs.get(
-                                    "info_text_class",
-                                    FieldBankCardSnapshot._info_text_class),
-                               text=kwargs.get(
-                                    "cvc_text",
-                                    "123"))
+        params["info_text"].update({"a": vd,
+                    "text": "888"})
+        self.cvc = justpy.Span(**params["info_text"])
 
     def show_brand(self, brand: str):
         self.logo.delete_components()
@@ -208,15 +299,26 @@ class FieldBankCard(justpy.Form):
     _layout_class = "w-full md:w-full lg:w-9/12 mx-auto md:mx-0"
     _container_class = "bg-white p-10 flex flex-col w-full shadow-xl rounded-xl"
     _group_class = "flex flex-col w-full my-5"
-    _expires_group_class = "block  space-x-4"
+    _expires_group_class = "flex flex-col block  space-x-4"
     _label_class = "text-gray-500 mb-2 uppercase"
     _input_class = "appearance-none border-2 border-gray-100 rounded-lg px-4 py-3 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-green-600 focus:shadow-lg"
     _select_class = "w-32 text-xl m-4 p-2 bg-white  border rounded"
 
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+        """
+        widgets:
+        - container
+        - holder
+        - number
+        - expires
+        - cvc
+        - snapshot
+        """
+        # handle parameters
+        params = {w: kwargs.pop(f"_{w}", dict()) for w in [
+            "container", "holder", "number", "expires", "cvc", "snapshot"]}
 
-        self.with_snapshot = kwargs.get("with_snapshot", True)
+        self.with_snapshot = kwargs.pop("with_snapshot", True)
         self.card = ModelCardNumber(
                         holder="John Doe",
                         number="4242424242424242",
@@ -224,158 +326,129 @@ class FieldBankCard(justpy.Form):
                         cvc="999")
 
         # layout
-        self.classes = kwargs.get(
-            "layout_class",
-            FieldBankCard._layout_class)
+        args_default(kwargs, {"classes": FieldBankCard._layout_class})
+        super().__init__(**kwargs)
 
         # container
-        c = justpy.Div(a=self,
-                       classes=kwargs.get(
-                            "container_class",
-                            FieldBankCard._container_class))
+        args_default(params["container"],
+                {"a": self,
+                 "classes": FieldBankCard._container_class})
+        c = justpy.Div(**params["container"])
 
         # form
         f = justpy.Form(a=c, classes="w-full")
 
         # number group
-        ug = justpy.Div(a=f,
-                        classes=kwargs.get(
-                            "group_class",
-                            FieldBankCard._group_class))
-        justpy.Label(a=ug,
-                     classes=kwargs.get(
-                            "label_class",
-                            FieldBankCard._label_class),
-                     text=kwargs.get(
-                            "number_lable",
-                            "Card number"))
-        iu = justpy.Input(a=ug,
-                          classes=kwargs.get(
-                                "input_class",
-                                FieldBankCard._input_class),
-                          placeholder=kwargs.get(
-                                "number_placeholder",
-                                "Please insert card number"))
-        iu.on("input", self.change_number)
+        args_default(params["number"],
+                {"a": f,
+                 "name": "number",
+                 "error": False,
+                 "autofocus": True,
+                 "label": "Card number",
+                 "hint": "Please insert card number",
+                 "hide-hint": True,
+                 "clearable": True,
+                 "outlined": True,
+                 "input-class": FieldBankCard._input_class,
+                 "rounded": True})
+        self.number = justpy.QInput(**params["number"])
+        self.number.on("input", self.change_number)
 
         # holder group
-        ag = justpy.Div(a=f,
-                        classes=kwargs.get(
-                            "group_class",
-                            FieldBankCard._group_class))
-        justpy.Label(a=ag,
-                     classes=kwargs.get(
-                            "label_class",
-                            FieldBankCard._label_class),
-                     text=kwargs.get(
-                            "holder_lable",
-                            "Holder name"))
-        ia = justpy.Input(a=ag,
-                           classes=kwargs.get(
-                                "input_class",
-                                FieldBankCard._input_class),
-                           placeholder=kwargs.get(
-                                "holder_name",
-                                "Please insert holder name"))
-        ia.on("input", self.change_holder)
+        args_default(params["holder"],
+                {"a": f,
+                 "name": "holder",
+                 "error": False,
+                 "autofocus": False,
+                 "label": "Holder name",
+                 "hint": "Please insert holder name",
+                 "hide-hint": True,
+                 "clearable": True,
+                 "outlined": True,
+                 "input-class": FieldBankCard._input_class,
+                 "rounded": True})
+        self.holder = justpy.QInput(**params["holder"])
+        self.holder.on("input", self.change_holder)
 
         # exp group
-        eg = justpy.Div(a=f,
-                        classes=kwargs.get(
-                            "expires_group_class",
-                            FieldBankCard._expires_group_class))
-        justpy.Label(a=eg,
-                     classes=kwargs.get(
-                            "label_class",
-                            FieldBankCard._label_class),
-                     text=kwargs.get(
-                            "expires_month_lable",
-                            "Month"))
-        self.month = justpy.Select(a=eg,
-                                   classes=kwargs.get(
-                                        "select_class",
-                                        FieldBankCard._select_class),
-                                   value="01",
-                                   change=self.change_expires)
-        for mon in ["01", "02", "03", "04", "05", "06",
-                    "07", "08", "09", "10", "11", "12"]:
-            self.month.add(justpy.Option(value=mon, text=mon))
+        eg = justpy.Div(a=f, classes=FieldBankCard._expires_group_class)
+        args_default(params["expires"],
+                {"a": eg,
+                 "label": "Month",
+                 "hint": "Please select the month of expires",
+                 "hide-hint": True,
+                 "outlined": True,
+                 "rounded": True,
+                 "options": ["01", "02", "03", "04", "05", "06",
+                    "07", "08", "09", "10", "11", "12"],
+                 "value": "01"
+                 })
+        justpy.QSelect(**params["expires"])
 
-        justpy.Label(a=eg,
-                     classes=kwargs.get(
-                            "label_class",
-                            FieldBankCard._label_class),
-                     text=kwargs.get(
-                            "expires_year_lable",
-                            "Year"))
+
         thisyear = datetime.now().strftime("%Y")
-        self.year = justpy.Select(a=eg,
-                                  classes=kwargs.get(
-                                        "select_class",
-                                        FieldBankCard._select_class),
-                                  value=thisyear,
-                                  change=self.change_expires)
-        for step in range(10):
-            year = str(int(thisyear) + step)
-            self.year.add(justpy.Option(value=year, text=year))
+        params["expires"].update({"a": eg,
+                 "label": "Year",
+                 "hint": "Please select the year of expires",
+                 "options": [str(int(thisyear) + step) for step in range(10)],
+                 "value": thisyear})
+        justpy.QSelect(**params["expires"])
 
         # cvc group
-        cg = justpy.Div(a=f,
-                        classes=kwargs.get(
-                            "group_class",
-                            FieldBankCard._group_class))
-        justpy.Label(a=cg,
-                     classes=kwargs.get(
-                            "label_class",
-                            FieldBankCard._label_class),
-                     text=kwargs.get(
-                            "cvc_lable",
-                            "cvc"))
-        ic = justpy.Input(a=cg,
-                          classes=kwargs.get(
-                                "input_class",
-                                FieldBankCard._input_class),
-                          placeholder=kwargs.get(
-                                "cvc_placeholder",
-                                "Please insert 3 digits CVC"))
-        ic.on("input", self.change_cvc)
+        args_default(params["cvc"],
+                {"a": f,
+                 "name": "cvc",
+                 "error": False,
+                 "autofocus": False,
+                 "label": "CVC",
+                 "hint": "Please insert 3 digits CVC",
+                 "hide-hint": True,
+                 "outlined": True,
+                 "clearable": True,
+                 "input-class": FieldBankCard._input_class,
+                 "rounded": True})
+        self.cvc = justpy.QInput(**params["cvc"])
+        self.cvc.on("input", self.change_cvc)
 
         if self.with_snapshot:
             # snapshot container
             sg = justpy.Div(a=self)
-            kwargs['a'] = sg
-            self.snapshot = FieldBankCardSnapshot(**kwargs)
+            args_default(params["snapshot"], {"a": sg})
+            self.snapshot = FieldBankCardSnapshot(**params["snapshot"])
+
+        self.notification = justpy.QNotify(a=self, position="bottom",
+                                closeBtn='Close', timeout=3000)
 
     async def change_number(self, msg):
         if len(msg.target.value) < 11:
+            self.number.error= False
             return
         try:
             self.card.number = msg.target.value
-        except Exception as e:
-            # TODO collect and response error to UI
-            print(f"!!!!{type(e)}-{e}")
-        self.snapshot.update_info(self.card)
+            self.snapshot.update_info(self.card)
+        except ValueError as e:
+            ui_input_error(self.number, f"{e}")
 
     async def change_holder(self, msg):
+        self.holder.error = False
         try:
             self.card.holder = msg.target.value
-        except Exception as e:
-            # TODO collect and response error to UI
-            print(f"!!!!{e}")
-        self.snapshot.update_info(self.card)
+            self.snapshot.update_info(self.card)
+        except ValueError as e:
+            ui_input_error(self.holder, f"{e}")
+
 
     async def change_expires(self, msg):
         try:
             self.card.expires = f"{self.year.value}-{self.month.value}-01"
-        except Exception as e:
-            # TODO collect and response error to UI
-            print(f"!!!!{e}")
-        self.snapshot.update_info(self.card)
+            self.snapshot.update_info(self.card)
+        except ValueError as e:
+            ui_notify(self, message=f"{e}")
 
     async def change_cvc(self, msg):
+        self.cvc.error = False
         try:
             self.card.cvc = msg.target.value
-        except Exception as e:
-            # TODO collect and response error to UI
-            print(f"!!!!{e}")
-        self.snapshot.update_info(self.card)
+            self.snapshot.update_info(self.card)
+        except ValueError as e:
+            ui_input_error(self.cvc, f"{e}")

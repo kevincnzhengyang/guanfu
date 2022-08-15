@@ -5,7 +5,7 @@
 * @Author      : kevin.z.y <kevin.cn.zhengyang@gmail.com>
 * @Date        : 2022-08-10 16:16:49
 * @LastEditors : kevin.z.y <kevin.cn.zhengyang@gmail.com>
-* @LastEditTime: 2022-08-15 09:46:54
+* @LastEditTime: 2022-08-15 22:20:46
 * @FilePath    : /guanfu/guanfu/fieldtype/login.py
 * @Description : login with username and password
 * @Copyright (c) 2022 by Zheng, Yang, All Rights Reserved.
@@ -16,7 +16,7 @@ from socket import timeout
 import justpy
 import logging
 
-from guanfu.utils.funcs import args_default
+from guanfu.utils.funcs import args_default, ui_notify, ui_input_error
 from guanfu.interface.user import UserIn
 from guanfu.interface.im_api import login_api
 import guanfu.interface.errors as ae
@@ -199,12 +199,6 @@ class FieldLogin(justpy.Div):
 
         self.notification = justpy.QNotify(a=self, position="bottom", closeBtn='Close', timeout=3000)
 
-
-    def notify(self, msg: str, caption: str = None) -> None:
-        self.notification.notify = True
-        self.notification.message = msg
-        self.notification.caption = caption
-
     def input_ready(self, msg):
         self.login_status = False
         if self.ipt_account.value.strip() and self.ipt_password.value.strip():
@@ -221,16 +215,14 @@ class FieldLogin(justpy.Div):
         except ValueError as e:
             # validation error happened in UserIn
             logging.info(f"login, UserIn model failed {self.ipt_account.value}")
-            self.notify(message="Validate Failed", caption=f"{e}")
+            ui_notify(self, message="Validate Failed", caption=f"{e}")
         except  ae.APIAccountError as e:
-            self.ipt_account.error = True
-            self.ipt_account.error_message = f"Account Invalid"
+            ui_input_error(self.ipt_account, "Account Invalid")
         except ae.APIPasswordError as e:
-            self.ipt_password.error = True
-            self.ipt_password.error_message = f"Password Invalid"
+            ui_input_error(self.ipt_password, "Password Invalid")
         except ae.APINetworkError as e:
             logging.error(f"login, network disconnect")
-            self.notify(message="Network Failed", caption=f"{e}")
+            ui_notify(self, message="Network Failed", caption=f"{e}")
         except ae.APISystemError as e:
             logging.error(f"login, IM system failed to response")
-            self.notify(message="System Failed", caption=f"{e}")
+            ui_notify(self, message="System Failed", caption=f"{e}")
